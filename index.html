@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculator — CAAT OPS</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:       #1a2e4a;
+    --blue:       #1e4d8c;
+    --blue-mid:   #2563a8;
+    --teal:       #2a9d8f;
+    --teal-light: #3bbfb0;
+    --grey-dark:  #2d3748;
+    --grey-mid:   #4a5568;
+    --grey-light: #e2e8f0;
+    --grey-pale:  #f0f4f8;
+    --white:      #ffffff;
+    --text-main:  #1a2e4a;
+    --text-muted: #64748b;
+    --danger:     #c0392b;
+    --shadow-sm:  0 1px 3px rgba(26,46,74,0.08);
+    --shadow-md:  0 4px 16px rgba(26,46,74,0.12);
+    --shadow-lg:  0 8px 32px rgba(26,46,74,0.16);
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--grey-pale);
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+  }
+
+  .wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 24px 16px;
+  }
+
+  /* Header bar */
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+  .header-icon {
+    width: 32px; height: 32px;
+    background: var(--blue);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .header-icon svg { width: 18px; height: 18px; fill: none; stroke: white; stroke-width: 2; stroke-linecap: round; }
+  .header-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* Calculator card */
+  .calc {
+    background: var(--white);
+    border-radius: 20px;
+    box-shadow: var(--shadow-lg);
+    width: 320px;
+    overflow: hidden;
+  }
+
+  /* Display */
+  .display {
+    background: var(--navy);
+    padding: 28px 24px 20px;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: flex-end;
+    gap: 6px;
+    position: relative;
+  }
+  .display-history {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: rgba(255,255,255,0.4);
+    min-height: 18px;
+    text-align: right;
+    word-break: break-all;
+    letter-spacing: 0.02em;
+  }
+  .display-main {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 38px;
+    font-weight: 500;
+    color: var(--white);
+    text-align: right;
+    word-break: break-all;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    transition: font-size 0.1s ease;
+  }
+  .display-main.shrink { font-size: 26px; }
+  .display-main.shrink2 { font-size: 20px; }
+
+  /* Teal accent line */
+  .accent-line {
+    height: 3px;
+    background: linear-gradient(90deg, var(--teal), var(--teal-light));
+  }
+
+  /* Button grid */
+  .buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--grey-light);
+    padding: 1px;
+  }
+
+  .btn {
+    border: none;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    padding: 20px 0;
+    transition: background 0.12s ease, transform 0.08s ease, color 0.12s ease;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  .btn:active { transform: scale(0.93); }
+  .btn:focus-visible { outline: 2px solid var(--teal); outline-offset: -2px; }
+
+  /* Button types */
+  .btn-num {
+    background: var(--white);
+    color: var(--text-main);
+  }
+  .btn-num:hover { background: var(--grey-pale); }
+
+  .btn-op {
+    background: var(--grey-pale);
+    color: var(--blue);
+    font-weight: 600;
+  }
+  .btn-op:hover { background: #dce8f5; }
+  .btn-op.active-op {
+    background: var(--blue);
+    color: var(--white);
+  }
+
+  .btn-fn {
+    background: #eef2f7;
+    color: var(--grey-mid);
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .btn-fn:hover { background: #e0e8f0; }
+
+  .btn-clear {
+    background: #fef0ee;
+    color: var(--danger);
+    font-weight: 600;
+  }
+  .btn-clear:hover { background: #fde0dc; }
+
+  .btn-equals {
+    background: var(--teal);
+    color: var(--white);
+    font-size: 20px;
+    font-weight: 400;
+  }
+  .btn-equals:hover { background: var(--teal-light); }
+
+  .btn-zero {
+    grid-column: span 2;
+    text-align: left;
+    padding-left: 28px;
+  }
+
+  /* Keyboard hint */
+  .hint {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.04em;
+    opacity: 0.7;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+
+  <div class="header">
+    <div class="header-icon">
+      <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/><line x1="15" y1="14" x2="15" y2="14"/></svg>
+    </div>
+    <span class="header-title">CAAT OPS · Calculator</span>
+  </div>
+
+  <div class="calc">
+    <div class="display">
+      <div class="display-history" id="history">&nbsp;</div>
+      <div class="display-main" id="display">0</div>
+    </div>
+    <div class="accent-line"></div>
+
+    <div class="buttons">
+      <!-- Row 1 -->
+      <button class="btn btn-clear" data-action="clear">AC</button>
+      <button class="btn btn-fn"    data-action="sign">+/−</button>
+      <button class="btn btn-fn"    data-action="percent">%</button>
+      <button class="btn btn-op"    data-op="÷">÷</button>
+
+      <!-- Row 2 -->
+      <button class="btn btn-num" data-num="7">7</button>
+      <button class="btn btn-num" data-num="8">8</button>
+      <button class="btn btn-num" data-num="9">9</button>
+      <button class="btn btn-op"  data-op="×">×</button>
+
+      <!-- Row 3 -->
+      <button class="btn btn-num" data-num="4">4</button>
+      <button class="btn btn-num" data-num="5">5</button>
+      <button class="btn btn-num" data-num="6">6</button>
+      <button class="btn btn-op"  data-op="−">−</button>
+
+      <!-- Row 4 -->
+      <button class="btn btn-num" data-num="1">1</button>
+      <button class="btn btn-num" data-num="2">2</button>
+      <button class="btn btn-num" data-num="3">3</button>
+      <button class="btn btn-op"  data-op="+">+</button>
+
+      <!-- Row 5 -->
+      <button class="btn btn-num btn-zero" data-num="0">0</button>
+      <button class="btn btn-num" data-action="decimal">.</button>
+      <button class="btn btn-equals" data-action="equals">=</button>
+    </div>
+  </div>
+
+  <span class="hint">Keyboard supported · Click = or press Enter</span>
+
+</div>
+
+<script>
+  const display  = document.getElementById('display');
+  const history  = document.getElementById('history');
+
+  let current    = '0';
+  let previous   = null;
+  let operator   = null;
+  let freshInput = false;
+
+  function updateDisplay(val) {
+    // Format numbers with commas for readability
+    let num = parseFloat(val);
+    let str = val;
+    if (!isNaN(num) && !str.endsWith('.')) {
+      // Limit decimal places
+      if (str.includes('.')) {
+        let parts = str.split('.');
+        parts[0] = Number(parts[0]).toLocaleString('en-US');
+        str = parts.join('.');
+      } else {
+        str = num.toLocaleString('en-US');
+      }
+    }
+    display.textContent = str;
+    // Shrink font for long numbers
+    display.classList.remove('shrink', 'shrink2');
+    if (str.length > 14) display.classList.add('shrink2');
+    else if (str.length > 9) display.classList.add('shrink');
+  }
+
+  function setHistory(str) {
+    history.textContent = str || '\u00a0';
+  }
+
+  function inputDigit(digit) {
+    if (freshInput) {
+      current = digit === '0' ? '0' : digit;
+      freshInput = false;
+    } else {
+      if (current === '0' && digit !== '.') {
+        current = digit;
+      } else if (current.length < 15) {
+        current += digit;
+      }
+    }
+    updateDisplay(current);
+  }
+
+  function inputDecimal() {
+    if (freshInput) { current = '0.'; freshInput = false; updateDisplay(current); return; }
+    if (!current.includes('.')) { current += '.'; updateDisplay(current); }
+  }
+
+  function toggleSign() {
+    if (current === '0') return;
+    current = current.startsWith('-') ? current.slice(1) : '-' + current;
+    updateDisplay(current);
+  }
+
+  function percent() {
+    current = String(parseFloat(current) / 100);
+    updateDisplay(current);
+  }
+
+  function setOperator(op) {
+    // Highlight active operator button
+    document.querySelectorAll('.btn-op').forEach(b => b.classList.remove('active-op'));
+    document.querySelectorAll('.btn-op').forEach(b => {
+      if (b.dataset.op === op) b.classList.add('active-op');
+    });
+
+    if (operator && !freshInput) calculate(true);
+    previous  = current;
+    operator  = op;
+    freshInput = true;
+    setHistory(current + ' ' + op);
+  }
+
+  function calculate(chaining = false) {
+    if (!operator || previous === null) return;
+    let a = parseFloat(previous.replace(/,/g, ''));
+    let b = parseFloat(current.replace(/,/g, ''));
+    let result;
+    switch(operator) {
+      case '+': result = a + b; break;
+      case '−': result = a - b; break;
+      case '×': result = a * b; break;
+      case '÷': result = b === 0 ? 'Error' : a / b; break;
+    }
+    if (!chaining) {
+      setHistory(previous + ' ' + operator + ' ' + current + ' =');
+    }
+    document.querySelectorAll('.btn-op').forEach(b => b.classList.remove('active-op'));
+    if (result === 'Error') {
+      current = 'Error';
+      display.textContent = 'Error';
+      operator = null; previous = null; freshInput = true;
+      return;
+    }
+    // Avoid floating point display issues
+    let rounded = parseFloat(result.toPrecision(12));
+    current   = String(rounded);
+    operator  = null;
+    previous  = null;
+    freshInput = true;
+    updateDisplay(current);
+  }
+
+  function clear() {
+    current = '0'; previous = null; operator = null; freshInput = false;
+    document.querySelectorAll('.btn-op').forEach(b => b.classList.remove('active-op'));
+    updateDisplay('0');
+    setHistory('');
+  }
+
+  // Button events
+  document.querySelectorAll('.btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.num !== undefined)        inputDigit(btn.dataset.num);
+      else if (btn.dataset.op)                  setOperator(btn.dataset.op);
+      else if (btn.dataset.action === 'equals') calculate();
+      else if (btn.dataset.action === 'clear')  clear();
+      else if (btn.dataset.action === 'decimal') inputDecimal();
+      else if (btn.dataset.action === 'sign')   toggleSign();
+      else if (btn.dataset.action === 'percent') percent();
+    });
+  });
+
+  // Keyboard support
+  document.addEventListener('keydown', e => {
+    if (e.key >= '0' && e.key <= '9')       inputDigit(e.key);
+    else if (e.key === '.')                  inputDecimal();
+    else if (e.key === '+')                  setOperator('+');
+    else if (e.key === '-')                  setOperator('−');
+    else if (e.key === '*')                  setOperator('×');
+    else if (e.key === '/')                  { e.preventDefault(); setOperator('÷'); }
+    else if (e.key === 'Enter' || e.key === '=') calculate();
+    else if (e.key === 'Backspace')          { current = current.length > 1 ? current.slice(0, -1) : '0'; updateDisplay(current); }
+    else if (e.key === 'Escape')             clear();
+    else if (e.key === '%')                  percent();
+  });
+
+  // Init
+  updateDisplay('0');
+</script>
+</body>
+</html>
